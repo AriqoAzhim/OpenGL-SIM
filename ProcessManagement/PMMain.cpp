@@ -1,5 +1,4 @@
 #using <System.dll>
-
 #include <SMObject.h>
 #include <stdio.h>
 #include <iostream>
@@ -9,15 +8,15 @@
 
 using namespace System;
 
-#define NUM_UNITS 1
+#define NUM_UNITS 5
 // Start up sequence
 TCHAR Units[10][20] =
 {
 	TEXT("Laser.exe"),
-	// TEXT("GPS.exe"),
-	// TEXT("XBox.exe"),
-	// TEXT("VehicleControl.exe"),
-	// TEXT("OpenGL.exe"),
+	TEXT("OpenGL.exe"),
+	TEXT("GPS.exe"),
+	TEXT("Camera.exe"),
+	TEXT("VehicleControl.exe"),
 
 };
 
@@ -46,7 +45,9 @@ int main() {
 	PMObj.SMAccess();
 	ProcessManagement* PMPtr = (ProcessManagement*)PMObj.pData;
 
-	// Set up heartbeats
+
+	// Set up heartbeats and Shutdown Flags
+
 	PMPtr->Heartbeats.Status = 0;
 
 	/*
@@ -66,6 +67,7 @@ int main() {
 	// Set up shutdown data
 	PMPtr->Shutdown.Status = 0;
 
+
 	// Start all processes
 
 	// Module execution based variable declarations
@@ -74,6 +76,7 @@ int main() {
 
 	std::string str = "Laser.exe";
 	const char* pointer = str.c_str();
+	
 
 	// Starting the processes
 	for (int i = 0; i < NUM_UNITS; i++)
@@ -87,6 +90,7 @@ int main() {
 			s[i].cb = sizeof(s[i]);
 			ZeroMemory(&p[i], sizeof(p[i]));
 			// Start the child processes.
+			System::Threading::Thread::Sleep(1000);
 
 			if (!CreateProcess(NULL,   // No module name (use command line)
 				Units[i],        // Command line
@@ -106,9 +110,8 @@ int main() {
 			}
 		}
 		std::cout << "Started: " << Units[i] << std::endl;
-		Sleep(1000);
 	}
-
+	System::Threading::Thread::Sleep(1000);
 	// getchar();
 
 	// While PM shutdown flag is LOW, loop through heartbeat process
@@ -142,8 +145,8 @@ int main() {
 	//		}
 	//	}
 	//}
-
-	while (!_kbhit())
+	
+	while (!PMPtr->Shutdown.Flags.Laser)
 	{
 		// printf("in kb loop");
 
@@ -152,7 +155,27 @@ int main() {
 		// While PM shutdown flag is LOW, loop through heartbeat process
 		while (!PMPtr->Shutdown.Flags.PM)
 		{
-			
+			Console::WriteLine("In loop");
+			if (PMPtr->Heartbeats.Flags.Laser == 0)
+			{
+				Console::WriteLine("In PM, checking laser heartbeat: ");
+				Console::WriteLine(PMPtr->PMHeartbeats.Flags.Laser);
+				PMPtr->Heartbeats.Flags.Laser = 1;
+				PMPtr->WAIT_COUNT[1] = 0;
+					// Reset WaitAndSeeTime
+			}
+			else
+			{
+				PMPtr->WAIT_COUNT[1] = PMPtr->WAIT_COUNT[1] + 1;
+				Console::WriteLine("In PM, Wait and See =  ");
+				Console::WriteLine(PMPtr->WAIT_COUNT[0]);
+				if (PMPtr->WAIT_COUNT[1] > PMPtr->LIMIT)
+				{
+					//Shutdown all
+					PMPtr->Shutdown.Status = 0xFF;
+				}
+			}
+			System::Threading::Thread::Sleep(1000);
 			//if (PMPtr->PMHeartbeats.Flags.Laser == 1)
 			//{
 			//	PMPtr->Heartbeats.Flags.Laser == 0;
@@ -182,14 +205,14 @@ int main() {
 			//	break;
 			//}
 
-			if (_kbhit)
+			if (_kbhit())
 			{
-				PMPtr->Shutdown.Flags.PM = 1;
+
+				PMPtr->Shutdown.Status = 0xFF;
 			}
 		}
 	}
 
-	PMPtr->Shutdown.Status = 0xFF;
 
 	return 0;
 }

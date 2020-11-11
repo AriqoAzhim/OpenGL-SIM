@@ -2,7 +2,7 @@
 struct ModuleFlags
 {
     unsigned char PM : 1,
-        GPS : 1, Laser : 1, Xbox : 1, Vehicle : 1, Unused : 3;
+        GPS : 1, Laser : 1, OpenGL : 1, Vehicle : 1, Camera : 1, Unused : 2;
 
 };
 
@@ -19,7 +19,7 @@ struct ProcessManagement
 	ExecFlags PMHeartbeats;
 	ExecFlags Shutdown;
 	int WAIT_COUNT[6];
-	int LIMIT = 5000;
+	int LIMIT;
 };
 
 struct Laser

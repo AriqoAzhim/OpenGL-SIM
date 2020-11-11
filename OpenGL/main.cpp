@@ -5,6 +5,9 @@
 #include <cstring>
 #include <sstream>
 #include <map>
+#include <SMObject.h>
+#include <conio.h>//_kbhit()
+#include <SMStruct.h>
 
 #ifdef __APPLE__
 	#include <OpenGL/gl.h>
@@ -64,8 +67,12 @@ Vehicle * vehicle = NULL;
 double speed = 0;
 double steering = 0;
 
+SMObject PMObj(_TEXT("ProcessManagement"), sizeof(ProcessManagement));
+
 //int _tmain(int argc, _TCHAR* argv[]) {
 int main(int argc, char ** argv) {
+
+	PMObj.SMAccess();
 
 	const int WINDOW_WIDTH = 800;
 	const int WINDOW_HEIGHT = 600;
@@ -174,6 +181,7 @@ double getTime()
 }
 
 void idle() {
+	
 
 	if (KeyManager::get()->isAsciiKeyPressed('a')) {
 		Camera::get()->strafeLeft();
@@ -234,6 +242,13 @@ void idle() {
 	}
 
 	display();
+	
+	ProcessManagement* PMPtr = (ProcessManagement*)PMObj.pData;
+
+	if (PMPtr->Shutdown.Flags.OpenGL != 0)
+	{
+		exit(0);
+	}
 
 #ifdef _WIN32 
 	Sleep(sleep_time_between_frames_in_seconds * 1000);
